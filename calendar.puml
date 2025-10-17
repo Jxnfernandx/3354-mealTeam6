@@ -1,0 +1,21 @@
+@startuml
+
+title Calendar Application - Sequence Diagram
+
+skinparam actorStyle awesome
+actor "User" as User
+database "Calendar Database" as DB
+
+
+rectangle "Calendar Application" {
+    User --> (Create Event)
+    User --> (View Events)
+    User --> (Edit Event)
+    User --> (Delete Event)
+
+    (Create Event) --> DB : Save Event
+    (View Events) --> DB : Retrieve Events
+    (Edit Event) --> DB : Update Event
+    (Delete Event) --> DB : Remove Event
+}
+@enduml
