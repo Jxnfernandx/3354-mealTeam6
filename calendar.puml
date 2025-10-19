@@ -1,21 +1,73 @@
 @startuml
+title Simplified Calendar System Sequence Diagram
 
-title Calendar Application - Sequence Diagram
+actor User
+participant "Client App" as Client
+participant "Calendar API" as API
+participant "Database" as DB
+participant "Conflict Checker" as Conflict
+participant "Recurrence Engine" as Recurrence
+participant "Category Service" as Category
+participant "Audit Log" as Audit
 
-skinparam actorStyle awesome
-actor "User" as User
-database "Calendar Database" as DB
+== View Calendar ==
+User -> Client : Select monthly/weekly/daily view
+Client -> API : Request events for date range
+API -> DB : Fetch events
+DB --> API : Return events
+API -> Category : Get category colors
+Category --> API : Return categories
+API --> Client : Return events + categories
+Client -> User : Display calendar view
+note right of Client
+Loads within 2s (performance requirement)
+end note
+
+== Create Event ==
+User -> Client : Enter event details
+Client -> API : POST /events
+API -> Conflict : Check for overlapping events
+Conflict --> API : No conflict
+API -> Recurrence : Generate recurring pattern (if any)
+Recurrence --> API : Recurrence info
+API -> DB : Save event(s)
+DB --> API : Success
+API -> Audit : Log creation
+Audit --> API : Logged
+API --> Client : Confirm creation
+Client -> User : Show new event
+
+== Edit Event ==
+User -> Client : Edit existing event
+Client -> API : PUT /events/{id}
+API -> Conflict : Check conflict
+Conflict --> API : OK
+API -> DB : Update event
+DB --> API : Updated
+API -> Audit : Log edit
+Audit --> API : Logged
+API --> Client : Success message
+Client -> User : Show updated event
+
+== Delete Event ==
+User -> Client : Delete event
+Client -> API : DELETE /events/{id}
+API -> DB : Delete event
+DB --> API : Deleted
+API -> Audit : Log deletion
+Audit --> API : Logged
+API --> Client : Confirm delete
+Client -> User : Remove from view
+
+== Manage Categories ==
+User -> Client : Create/Edit/Delete category
+Client -> API : Update categories
+API -> Category : Perform operation
+Category --> API : Updated list
+API -> DB : Save category data
+DB --> API : Done
+API --> Client : Updated categories
+Client -> User : Refresh calendar with new colors
 
 
-rectangle "Calendar Application" {
-    User --> (Create Event)
-    User --> (View Events)
-    User --> (Edit Event)
-    User --> (Delete Event)
-
-    (Create Event) --> DB : Save Event
-    (View Events) --> DB : Retrieve Events
-    (Edit Event) --> DB : Update Event
-    (Delete Event) --> DB : Remove Event
-}
 @enduml
